@@ -80,6 +80,41 @@ decl_module! {
 
 			Ok(())
 		}
+
+		fn mint(_origin, value: T::TokenBalance) -> Result {
+			let sender = ensure_signed(_origin)?;
+			ensure!(Self::owner() == sender, "Only owner can mint the token");
+
+			let sender_balance = match <BalanceOf<T>>::exists(sender.clone()) {
+				true => Self::balance_of(sender.clone()),
+				_ => <T::TokenBalance as As<u128>>::sa(0)
+			};
+
+			let updated_sender_balance = sender_balance.checked_add(&value).ok_or("overflow")?;
+			let updated_total_supply = Self::total_supply().checked_add(&value).ok_or("overflow")?;
+
+			<BalanceOf<T>>::insert(sender.clone(), updated_sender_balance);
+			<TotalSupply<T>>::put(updated_total_supply);
+
+			Ok(())
+		}
+
+		fn burn(_origin, value: T::TokenBalance) -> Result {
+			let sender = ensure_signed(_origin)?;
+			ensure!(Self::owner() == sender, "Only owner can burn the token");
+
+			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
+			let sender_balance = Self::balance_of(sender.clone());
+			ensure!(sender_balance >= value, "Not enough balance.");
+
+			let updated_sender_balance = sender_balance.checked_sub(&value).ok_or("overflow")?;
+			let updated_total_supply = Self::total_supply().checked_sub(&value).ok_or("overflow")?;
+
+			<BalanceOf<T>>::insert(sender.clone(), updated_sender_balance);
+			<TotalSupply<T>>::put(updated_total_supply);
+
+			Ok(())
+		}
 	}
 }
 
