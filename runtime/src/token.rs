@@ -23,6 +23,8 @@ pub trait Trait: system::Trait {
 	/// Codec, Default: for using in Store
 	/// Parameter: for using as a parameter
 	type TokenBalance: SimpleArithmetic + Codec + Default + Copy + Parameter + As<u128>;
+
+	type ChildChainId: Codec + Default + Copy + Parameter + As<u32>;
 }
 
 // This module's storage items.
@@ -33,13 +35,17 @@ decl_storage! {
 
 		Owner get(owner): T::AccountId;
 
-		TotalSupply get(total_supply): T::TokenBalance;
-
 		Name get(name): Vec<u8>;
 		Ticker get(ticker): Vec<u8>;
 
+		// TotalSupply := LocalSupply + ParentSupply + Sum(ChildSupplies)
+		TotalSupply get(total_supply): T::TokenBalance;
+		LocalSupply get(local_supply): T::TokenBalance;
+		// BalanceOf: only for LocalSupply
 		BalanceOf get(balance_of): map T::AccountId => T::TokenBalance;
-		Allowance get(allowance): map (T::AccountId, T::AccountId) => T::TokenBalance;
+
+		ParentSupply get(parent_supply): T::TokenBalance;
+		ChildSupplies get(child_supply_of): map T::ChildChainId => T::TokenBalance;
 	}
 }
 
@@ -57,6 +63,8 @@ decl_module! {
 			ensure!(Self::is_init() == false, "Already initialized.");
 
 			<TotalSupply<T>>::put(total_supply);
+			<LocalSupply<T>>::put(total_supply);
+			<ParentSupply<T>>::put(<T::TokenBalance as As<u128>>::sa(0));
 			<BalanceOf<T>>::insert(sender.clone(), total_supply);
 			<Owner<T>>::put(sender.clone());
 			<Init<T>>::put(true);
@@ -64,6 +72,7 @@ decl_module! {
 			Ok(())
 		}
 
+		// Transter token in LocalSupply
 		fn transfer(_origin, receiver: T::AccountId, value: T::TokenBalance) -> Result {
 			let sender = ensure_signed(_origin)?;
 			
@@ -81,6 +90,7 @@ decl_module! {
 			Ok(())
 		}
 
+		// Mint new token by the owner
 		fn mint(_origin, value: T::TokenBalance) -> Result {
 			let sender = ensure_signed(_origin)?;
 			ensure!(Self::owner() == sender, "Only owner can mint the token");
@@ -92,13 +102,16 @@ decl_module! {
 
 			let updated_sender_balance = sender_balance.checked_add(&value).ok_or("overflow")?;
 			let updated_total_supply = Self::total_supply().checked_add(&value).ok_or("overflow")?;
+			let updated_local_supply = Self::local_supply().checked_add(&value).ok_or("overflow")?;
 
 			<BalanceOf<T>>::insert(sender.clone(), updated_sender_balance);
 			<TotalSupply<T>>::put(updated_total_supply);
+			<LocalSupply<T>>::put(updated_local_supply);
 
 			Ok(())
 		}
 
+		// Burn some existing token by the owner
 		fn burn(_origin, value: T::TokenBalance) -> Result {
 			let sender = ensure_signed(_origin)?;
 			ensure!(Self::owner() == sender, "Only owner can burn the token");
@@ -109,9 +122,92 @@ decl_module! {
 
 			let updated_sender_balance = sender_balance.checked_sub(&value).ok_or("overflow")?;
 			let updated_total_supply = Self::total_supply().checked_sub(&value).ok_or("overflow")?;
+			let updated_local_supply = Self::local_supply().checked_sub(&value).ok_or("overflow")?;
 
 			<BalanceOf<T>>::insert(sender.clone(), updated_sender_balance);
 			<TotalSupply<T>>::put(updated_total_supply);
+			<LocalSupply<T>>::put(updated_local_supply);
+
+			Ok(())
+		}
+
+		// Send some token to the parent chain
+		fn send_to_parent(_origin, value: T::TokenBalance) -> Result {
+			let sender = ensure_signed(_origin)?;
+			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
+			let sender_balance = Self::balance_of(sender.clone());
+			ensure!(sender_balance >= value, "Not enough balance.");
+
+			let updated_sender_balance = sender_balance.checked_sub(&value).ok_or("overflow")?;
+			let updated_local_supply = Self::local_supply().checked_sub(&value).ok_or("overflow")?;
+			let updated_parent_supply = Self::parent_supply().checked_add(&value).ok_or("overflow")?;
+
+			<BalanceOf<T>>::insert(sender.clone(), updated_sender_balance);
+			<LocalSupply<T>>::put(updated_local_supply);
+			<ParentSupply<T>>::put(updated_parent_supply);
+
+			Ok(())
+		}
+
+		// Send some token to a child chain
+		fn send_to_child(_origin, child: T::ChildChainId, value: T::TokenBalance) -> Result {
+			let sender = ensure_signed(_origin)?;
+			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
+			let sender_balance = Self::balance_of(sender.clone());
+			ensure!(sender_balance >= value, "Not enough balance.");
+
+			let updated_sender_balance = sender_balance.checked_sub(&value).ok_or("overflow")?;
+			let updated_local_supply = Self::local_supply().checked_sub(&value).ok_or("overflow")?;
+			let updated_child_supply = Self::child_supply_of(child).checked_add(&value).ok_or("overflow")?;
+
+			<BalanceOf<T>>::insert(sender.clone(), updated_sender_balance);
+			<LocalSupply<T>>::put(updated_local_supply);
+			<ChildSupplies<T>>::insert(child, updated_child_supply);
+
+			Ok(())
+		}
+
+		// Receive some token from the parent chain
+		fn receive_from_parent(_origin, value: T::TokenBalance) -> Result {
+			let receiver = ensure_signed(_origin)?;
+			let parent_supply = Self::parent_supply();
+			ensure!(parent_supply >= value, "Not enough balance.");
+
+			let receiver_balance = match <BalanceOf<T>>::exists(receiver.clone()) {
+				true => Self::balance_of(receiver.clone()),
+				_ => <T::TokenBalance as As<u128>>::sa(0)
+			};
+
+			let updated_parent_supply = parent_supply.checked_sub(&value).ok_or("overflow")?;
+			let updated_local_supply = Self::local_supply().checked_add(&value).ok_or("overflow")?;
+			let updated_receiver_balance = receiver_balance.checked_add(&value).ok_or("overflow")?;
+
+			<ParentSupply<T>>::put(updated_parent_supply);
+			<LocalSupply<T>>::put(updated_local_supply);
+			<BalanceOf<T>>::insert(receiver.clone(), updated_receiver_balance);
+
+			Ok(())
+		}
+
+		// Receive some token from a child chain
+		fn receive_from_child(_origin, child: T::ChildChainId, value: T::TokenBalance) -> Result {
+			let receiver = ensure_signed(_origin)?;
+			ensure!(<ChildSupplies<T>>::exists(child), "Child Chain does not own this token");
+			let child_supply = Self::child_supply_of(child);
+			ensure!(child_supply >= value, "Not enough balance.");
+
+			let receiver_balance = match <BalanceOf<T>>::exists(receiver.clone()) {
+				true => Self::balance_of(receiver.clone()),
+				_ => <T::TokenBalance as As<u128>>::sa(0)
+			};
+
+			let updated_child_supply = child_supply.checked_sub(&value).ok_or("overflow")?;
+			let updated_local_supply = Self::local_supply().checked_add(&value).ok_or("overflow")?;
+			let updated_receiver_balance = receiver_balance.checked_add(&value).ok_or("overflow")?;
+
+			<ChildSupplies<T>>::insert(child, updated_child_supply);
+			<LocalSupply<T>>::put(updated_local_supply);
+			<BalanceOf<T>>::insert(receiver.clone(), updated_receiver_balance);
 
 			Ok(())
 		}
