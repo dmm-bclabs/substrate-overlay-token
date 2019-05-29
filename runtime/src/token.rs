@@ -9,15 +9,20 @@
 /// https://github.com/paritytech/substrate/blob/master/srml/example/src/lib.rs
 
 use rstd::prelude::Vec;
-use support::{decl_module, decl_storage, decl_event, StorageValue, dispatch::Result, ensure, StorageMap};
+use parity_codec::Codec;
+use support::{decl_module, decl_storage, decl_event, StorageValue, dispatch::Result, ensure, StorageMap, Parameter};
 use system::ensure_signed;
+use runtime_primitives::traits::{SimpleArithmetic, CheckedSub, CheckedAdd, As};
 
 /// The module's configuration trait.
 pub trait Trait: system::Trait {
-	// TODO: Add other types and constants required configure this module.
-
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+
+	/// SimpleArithmetic: for using checked_add, checked_sub
+	/// Codec, Default: for using in Store
+	/// Parameter: for using as a parameter
+	type TokenBalance: SimpleArithmetic + Codec + Default + Copy + Parameter + As<u128>;
 }
 
 // This module's storage items.
@@ -28,13 +33,13 @@ decl_storage! {
 
 		Owner get(owner): T::AccountId;
 
-		TotalSupply get(total_supply): u128;
+		TotalSupply get(total_supply): T::TokenBalance;
 
 		Name get(name): Vec<u8>;
 		Ticker get(ticker): Vec<u8>;
 
-		BalanceOf get(balance_of): map T::AccountId => u128;
-		Allowance get(allowance): map (T::AccountId, T::AccountId) => u128;
+		BalanceOf get(balance_of): map T::AccountId => T::TokenBalance;
+		Allowance get(allowance): map (T::AccountId, T::AccountId) => T::TokenBalance;
 	}
 }
 
@@ -46,7 +51,7 @@ decl_module! {
 		// this is needed only if you are using events in your module
 		fn deposit_event<T>() = default;
 
-		fn init(origin, total_supply: u128) -> Result {
+		fn init(origin, total_supply: T::TokenBalance) -> Result {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(Self::is_init() == false, "Already initialized.");
@@ -55,6 +60,23 @@ decl_module! {
 			<BalanceOf<T>>::insert(sender.clone(), total_supply);
 			<Owner<T>>::put(sender.clone());
 			<Init<T>>::put(true);
+
+			Ok(())
+		}
+
+		fn transfer(_origin, receiver: T::AccountId, value: T::TokenBalance) -> Result {
+			let sender = ensure_signed(_origin)?;
+			
+			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
+			let sender_balance = Self::balance_of(sender.clone());
+			ensure!(sender_balance >= value, "Not enough balance.");
+
+			let updated_sender_balance = sender_balance.checked_sub(&value).ok_or("overflow")?;
+			let receiver_balance = Self::balance_of(receiver.clone());
+			let updated_receiver_balance = receiver_balance.checked_add(&value).ok_or("overflow")?;
+
+			<BalanceOf<T>>::insert(sender.clone(), updated_sender_balance);
+			<BalanceOf<T>>::insert(receiver.clone(), updated_receiver_balance);
 
 			Ok(())
 		}
