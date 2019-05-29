@@ -196,6 +196,8 @@ impl template::Trait for Runtime {
 
 impl token::Trait for Runtime {
 	type Event = Event;
+	type TokenBalance = u128;
+	type ChildChainId = u32;
 }
 
 construct_runtime!(
