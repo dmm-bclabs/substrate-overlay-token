@@ -98,13 +98,13 @@ fn testnet_genesis(initial_authorities: Vec<AuthorityId>, endowed_accounts: Vec<
 		}),
 		system: None,
 		timestamp: Some(TimestampConfig {
-			minimum_period: 1, // 2 second block time.
+			minimum_period: 5, // 10 second block time.
 		}),
 		indices: Some(IndicesConfig {
 			ids: endowed_accounts.clone(),
 		}),
 		balances: Some(BalancesConfig {
-			transaction_base_fee: 0,
+			transaction_base_fee: 1,
 			transaction_byte_fee: 0,
 			existential_deposit: 500,
 			transfer_fee: 0,
