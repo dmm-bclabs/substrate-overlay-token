@@ -14,7 +14,7 @@ fn run() -> cli::error::Result<()> {
 		name: "Substrate Node",
 		commit: env!("VERGEN_SHA_SHORT"),
 		version: env!("CARGO_PKG_VERSION"),
-		executable_name: "template-node",
+		executable_name: "substrate-overlay-token",
 		author: "knagato",
 		description: "substrate-overlay-token",
 		support_url: "support.anonymous.an",

@@ -94,8 +94,8 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("template-node"),
-	impl_name: create_runtime_str!("template-node"),
+	spec_name: create_runtime_str!("substrate-overlay-token"),
+	impl_name: create_runtime_str!("substrate-overlay-token"),
 	authoring_version: 3,
 	spec_version: 3,
 	impl_version: 0,
