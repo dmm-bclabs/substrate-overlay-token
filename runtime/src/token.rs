@@ -57,10 +57,12 @@ decl_module! {
 		// this is needed only if you are using events in your module
 		fn deposit_event<T>() = default;
 
-		fn init(origin, total_supply: T::TokenBalance) -> Result {
+		fn init(origin, total_supply: u128) -> Result {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(Self::is_init() == false, "Already initialized.");
+
+			let total_supply = <T::TokenBalance as As<u128>>::sa(total_supply);
 
 			<TotalSupply<T>>::put(total_supply);
 			<LocalSupply<T>>::put(total_supply);
@@ -73,8 +75,10 @@ decl_module! {
 		}
 
 		// Transter token in LocalSupply
-		fn transfer(_origin, receiver: T::AccountId, value: T::TokenBalance) -> Result {
+		fn transfer(_origin, receiver: T::AccountId, value: u128) -> Result {
 			let sender = ensure_signed(_origin)?;
+
+			let value = <T::TokenBalance as As<u128>>::sa(value);
 			
 			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
 			let sender_balance = Self::balance_of(sender.clone());
@@ -91,9 +95,11 @@ decl_module! {
 		}
 
 		// Mint new token by the owner
-		fn mint(_origin, value: T::TokenBalance) -> Result {
+		fn mint(_origin, value: u128) -> Result {
 			let sender = ensure_signed(_origin)?;
 			ensure!(Self::owner() == sender, "Only owner can mint the token");
+
+			let value = <T::TokenBalance as As<u128>>::sa(value);
 
 			let sender_balance = match <BalanceOf<T>>::exists(sender.clone()) {
 				true => Self::balance_of(sender.clone()),
