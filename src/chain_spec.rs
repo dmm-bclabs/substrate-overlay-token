@@ -46,7 +46,12 @@ impl Alternative {
 				|| testnet_genesis(vec![
 					authority_key("Alice")
 				], vec![
-					account_key("Alice")
+					account_key("Alice"),
+					account_key("Bob"),
+					account_key("Charlie"),
+					account_key("Dave"),
+					account_key("Eve"),
+					account_key("Ferdie"),
 				],
 					account_key("Alice")
 				),
@@ -106,7 +111,7 @@ fn testnet_genesis(initial_authorities: Vec<AuthorityId>, endowed_accounts: Vec<
 		balances: Some(BalancesConfig {
 			transaction_base_fee: 0,
 			transaction_byte_fee: 0,
-			existential_deposit: 500,
+			existential_deposit: 0,
 			transfer_fee: 0,
 			creation_fee: 0,
 			balances: endowed_accounts.iter().cloned().map(|k|(k, 1 << 60)).collect(),
