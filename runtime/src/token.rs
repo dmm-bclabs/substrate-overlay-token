@@ -124,12 +124,23 @@ decl_module! {
 				true => Self::balance_of(sender.clone()),
 				_ => <T::TokenBalance as As<u128>>::sa(0)
 			};
-			let updated_sender_balance = sender_balance.checked_add(&value).ok_or("overflow")?;
 			let updated_total_supply = Self::total_supply().checked_add(&value).ok_or("overflow")?;
 
-			let (updated_local_supply, updated_parent_supply) = match Self::is_root() {
-				true => (Self::local_supply().checked_add(&value).ok_or("overflow")?, Self::parent_supply()),
-				false => (Self::local_supply(), Self::parent_supply().checked_add(&value).ok_or("overflow")?)
+			let (
+				updated_sender_balance,
+				updated_local_supply,
+				updated_parent_supply
+			) = match Self::is_root() {
+				true => (
+					sender_balance.checked_add(&value).ok_or("overflow")?,
+					Self::local_supply().checked_add(&value).ok_or("overflow")?,
+					Self::parent_supply()
+				),
+				false => (
+					sender_balance,
+					Self::local_supply(),
+					Self::parent_supply().checked_add(&value).ok_or("overflow")?
+				)
 			};
 			<BalanceOf<T>>::insert(sender.clone(), updated_sender_balance);
 			<TotalSupply<T>>::put(updated_total_supply);
@@ -146,14 +157,27 @@ decl_module! {
 
 			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
 			let sender_balance = Self::balance_of(sender.clone());
-			ensure!(sender_balance >= value, "Not enough balance.");
 
-			let updated_sender_balance = sender_balance.checked_sub(&value).ok_or("overflow")?;
 			let updated_total_supply = Self::total_supply().checked_sub(&value).ok_or("overflow")?;
 
-			let (updated_local_supply, updated_parent_supply) = match Self::is_root() {
-				true => (Self::local_supply().checked_sub(&value).ok_or("overflow")?, Self::parent_supply()),
-				false => (Self::local_supply(), Self::parent_supply().checked_sub(&value).ok_or("overflow")?)
+			let (
+				updated_sender_balance,
+				updated_local_supply,
+				updated_parent_supply
+			) = match Self::is_root() {
+				true => {
+					ensure!(sender_balance >= value, "Not enough balance.");
+					(
+						sender_balance.checked_sub(&value).ok_or("overflow")?,
+						Self::local_supply().checked_sub(&value).ok_or("overflow")?,
+						Self::parent_supply()
+					)
+				},
+				false => (
+					sender_balance,
+					Self::local_supply(),
+					Self::parent_supply().checked_sub(&value).ok_or("overflow")?
+				)
 			};
 			<BalanceOf<T>>::insert(sender.clone(), updated_sender_balance);
 			<TotalSupply<T>>::put(updated_total_supply);
