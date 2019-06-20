@@ -33,6 +33,8 @@ decl_storage! {
 
 		Init get(is_init): bool;
 
+		Root get(is_root): bool;
+
 		Owner get(owner): T::AccountId;
 
 		Name get(name): Vec<u8>;
@@ -57,19 +59,36 @@ decl_module! {
 		// this is needed only if you are using events in your module
 		fn deposit_event<T>() = default;
 
-		fn init(origin, total_supply: u128) -> Result {
+		fn init(origin) -> Result {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(Self::is_init() == false, "Already initialized.");
 
-			let total_supply = <T::TokenBalance as As<u128>>::sa(total_supply);
+			let zero = <T::TokenBalance as As<u128>>::sa(0);
 
-			<TotalSupply<T>>::put(total_supply);
-			<LocalSupply<T>>::put(total_supply);
-			<ParentSupply<T>>::put(<T::TokenBalance as As<u128>>::sa(0));
-			<BalanceOf<T>>::insert(sender.clone(), total_supply);
+			<TotalSupply<T>>::put(zero);
+			<LocalSupply<T>>::put(zero);
+			<ParentSupply<T>>::put(zero);
+			<BalanceOf<T>>::insert(sender.clone(), zero);
 			<Owner<T>>::put(sender.clone());
 			<Init<T>>::put(true);
+			<Root<T>>::put(true);
+
+			Ok(())
+		}
+
+		fn set_parent(_origin, parent_supply: u128) -> Result {
+			let sender = ensure_signed(_origin)?;
+			ensure!(Self::owner() == sender, "Only owner can set parent chain");
+			ensure!(Self::is_root(), "This chain already has parent chain");
+
+			let supply = <T::TokenBalance as As<u128>>::sa(parent_supply);
+			let zero = <T::TokenBalance as As<u128>>::sa(0);
+
+			<TotalSupply<T>>::put(supply);
+			<LocalSupply<T>>::put(zero);
+			<ParentSupply<T>>::put(supply);
+			<Root<T>>::put(false);
 
 			Ok(())
 		}
@@ -105,14 +124,28 @@ decl_module! {
 				true => Self::balance_of(sender.clone()),
 				_ => <T::TokenBalance as As<u128>>::sa(0)
 			};
-
-			let updated_sender_balance = sender_balance.checked_add(&value).ok_or("overflow")?;
 			let updated_total_supply = Self::total_supply().checked_add(&value).ok_or("overflow")?;
-			let updated_local_supply = Self::local_supply().checked_add(&value).ok_or("overflow")?;
 
+			let (
+				updated_sender_balance,
+				updated_local_supply,
+				updated_parent_supply
+			) = match Self::is_root() {
+				true => (
+					sender_balance.checked_add(&value).ok_or("overflow")?,
+					Self::local_supply().checked_add(&value).ok_or("overflow")?,
+					Self::parent_supply()
+				),
+				false => (
+					sender_balance,
+					Self::local_supply(),
+					Self::parent_supply().checked_add(&value).ok_or("overflow")?
+				)
+			};
 			<BalanceOf<T>>::insert(sender.clone(), updated_sender_balance);
 			<TotalSupply<T>>::put(updated_total_supply);
 			<LocalSupply<T>>::put(updated_local_supply);
+			<ParentSupply<T>>::put(updated_parent_supply);
 
 			Ok(())
 		}
@@ -124,15 +157,32 @@ decl_module! {
 
 			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
 			let sender_balance = Self::balance_of(sender.clone());
-			ensure!(sender_balance >= value, "Not enough balance.");
 
-			let updated_sender_balance = sender_balance.checked_sub(&value).ok_or("overflow")?;
 			let updated_total_supply = Self::total_supply().checked_sub(&value).ok_or("overflow")?;
-			let updated_local_supply = Self::local_supply().checked_sub(&value).ok_or("overflow")?;
 
+			let (
+				updated_sender_balance,
+				updated_local_supply,
+				updated_parent_supply
+			) = match Self::is_root() {
+				true => {
+					ensure!(sender_balance >= value, "Not enough balance.");
+					(
+						sender_balance.checked_sub(&value).ok_or("overflow")?,
+						Self::local_supply().checked_sub(&value).ok_or("overflow")?,
+						Self::parent_supply()
+					)
+				},
+				false => (
+					sender_balance,
+					Self::local_supply(),
+					Self::parent_supply().checked_sub(&value).ok_or("overflow")?
+				)
+			};
 			<BalanceOf<T>>::insert(sender.clone(), updated_sender_balance);
 			<TotalSupply<T>>::put(updated_total_supply);
 			<LocalSupply<T>>::put(updated_local_supply);
+			<ParentSupply<T>>::put(updated_parent_supply);
 
 			Ok(())
 		}

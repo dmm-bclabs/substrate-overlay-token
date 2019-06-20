@@ -22,6 +22,8 @@ pub enum Alternative {
 	Development,
 	/// Whatever the current runtime is, with simple Alice/Bob auths.
 	LocalTestnet,
+	ParentNet,
+	ChildNet
 }
 
 fn authority_key(s: &str) -> AuthorityId {
@@ -83,12 +85,56 @@ impl Alternative {
 				None,
 				None
 			),
+			Alternative::ParentNet => ChainSpec::from_genesis(
+				"ParentNet",
+				"parent",
+				|| testnet_genesis(vec![
+					authority_key("Charlie")
+				], vec![
+					account_key("Alice"),
+					account_key("Bob"),
+					account_key("Charlie"),
+					account_key("Dave"),
+					account_key("Eve"),
+					account_key("Ferdie"),
+				],
+					account_key("Charlie")
+				),
+				vec![],
+				None,
+				None,
+				None,
+				None
+			),
+			Alternative::ChildNet => ChainSpec::from_genesis(
+				"ChildNet",
+				"child",
+				|| testnet_genesis(vec![
+					authority_key("Dave")
+				], vec![
+					account_key("Alice"),
+					account_key("Bob"),
+					account_key("Charlie"),
+					account_key("Dave"),
+					account_key("Eve"),
+					account_key("Ferdie"),
+				],
+					account_key("Dave")
+				),
+				vec![],
+				None,
+				None,
+				None,
+				None
+			),
 		})
 	}
 
 	pub(crate) fn from(s: &str) -> Option<Self> {
 		match s {
 			"dev" => Some(Alternative::Development),
+			"parent" => Some(Alternative::ParentNet),
+			"child" => Some(Alternative::ChildNet),
 			"" | "local" => Some(Alternative::LocalTestnet),
 			_ => None,
 		}

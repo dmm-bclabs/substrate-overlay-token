@@ -11,10 +11,25 @@ $ cargo build --release
 $ ./target/release/substrate-overlay-token --dev
 ```
 
+### start as parent
+
+```
+$ ./target/release/substrate-overlay-token purge-chain --chain parent --base-path /tmp/parent -y
+$ ./target/release/substrate-overlay-token --chain parent --charlie --validator --base-path /tmp/parent --ws-port 9944
+```
+
+### start as child
+
+```
+$ ./target/release/substrate-overlay-token purge-chain --chain child --base-path /tmp/child -y
+$ ./target/release/substrate-overlay-token --chain child --dave --validator --base-path /tmp/child --ws-port 9945
+```
+
 ## token details
 
 states
 - init: bool
+- root: bool
 - owner: AccountId
 - name: Bytes
 - ticker: Bytes
@@ -25,7 +40,8 @@ states
 - childSupplies(ChildChainId): TokenBalance
 
 functions
-- init(total_supply)
+- init()
+- set_parent(parent_supply)
 - transfer(receiver, value)
 - mint(value)
 - burn(value)
