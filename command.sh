@@ -29,7 +29,10 @@ then
     && cargo build --release
 elif [ $1 = "run" ]
 then
-    cp substrate-overlay-token/docker/. .
+    if [ ! -e parent.sh ] || [ ! -e child.sh ] || [ ! -e docker-compose.yaml ] || [ ! -e default.conf ]
+    then
+        cp -r substrate-overlay-token/docker/. .
+    fi
     sudo docker-compose up -d
 elif [ $1 = "log" ]
 then
