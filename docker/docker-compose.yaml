@@ -1,0 +1,53 @@
+version: '3'
+services:
+  parent:
+    image: "parity/substrate"
+    volumes:
+      - "./substrate-overlay-token/target/release/substrate-overlay-token:/usr/local/bin/substrate-overlay-token"
+      - "./parent.sh:/parent.sh"
+    entrypoint: bash
+    command: parent.sh
+  child:
+    image: "parity/substrate"
+    volumes:
+      - "./substrate-overlay-token/target/release/substrate-overlay-token:/usr/local/bin/substrate-overlay-token"
+      - "./child.sh:/child.sh"
+    entrypoint: bash
+    command: child.sh
+  nginx:
+    image: "nginx"
+    volumes:
+      - "./default.conf:/etc/nginx/conf.d/default.conf"
+      - "/etc/letsencrypt/live/dev.wshino.com/fullchain.pem:/etc/letsencrypt/live/dev.wshino.com/fullchain.pem"
+      - "/etc/letsencrypt/live/dev.wshino.com/privkey.pem:/etc/letsencrypt/live/dev.wshino.com/privkey.pem"
+    ports:
+      - "9944:9944"
+      - "9945:9945"
+  bridge:
+    image: "node"
+    volumes:
+      - "./substrate-overlay-token-bridge:/app"
+    environment:
+      PARENT: "wss://dev.wshino.com:9944"
+      CHILD: "wss://dev.wshino.com:9945"   
+    working_dir: "/app"
+    entrypoint: yarn
+    command: dev
+  ui-parent:
+    image: "node"
+    volumes:
+      - "./substrate-overlay-token-ui:/app"      
+    ports:
+      - "8000:8000"
+    working_dir: "/app"
+    entrypoint: yarn
+    command: dev
+  ui-child:
+    image: "node"
+    volumes:
+      - "./substrate-overlay-token-ui:/app"
+    ports:
+      - "8001:8000"
+    working_dir: "/app"
+    entrypoint: yarn
+    command: dev
