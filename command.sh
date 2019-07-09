@@ -29,7 +29,7 @@ then
     && cargo build --release
 elif [ $1 = "run" ]
 then
-    cp substrate-overlay-token/docker .
+    cp substrate-overlay-token/docker/. .
     sudo docker-compose up -d
 elif [ $1 = "log" ]
 then

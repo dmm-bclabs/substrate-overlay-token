@@ -58,3 +58,12 @@ additional type definitions
   "ChildChainId": "u32"
 }
 ```
+
+## Using docker-compose
+
+```
+$ cp command.sh ../
+$ cd ../
+$ git clone substrate-overlay-token-ui
+$ git clone substrate-overlay-token-bridge
+```
