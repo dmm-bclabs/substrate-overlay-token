@@ -39,6 +39,8 @@ services:
       - "./substrate-overlay-token-ui:/app"      
     ports:
       - "8000:8000"
+    environment:
+      NODE: "wss://dev.wshino.com:9944"
     working_dir: "/app"
     entrypoint: yarn
     command: dev
@@ -48,6 +50,8 @@ services:
       - "./substrate-overlay-token-ui:/app"
     ports:
       - "8001:8000"
+    environment:
+      NODE: "wss://dev.wshino.com:9945"
     working_dir: "/app"
     entrypoint: yarn
     command: dev
