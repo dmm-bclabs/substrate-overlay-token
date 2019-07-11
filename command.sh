@@ -39,7 +39,8 @@ then
     then
         domain_name_error
     else
-        sed -ien "s/{YOUR_DOMAIN}/$2/g" ./substrate-overlay-token/docker/default.conf
+        cp ./substrate-overlay-token/docker/default.conf .
+        sed -ien "s/{YOUR_DOMAIN}/$2/g" default.conf
         cp ./substrate-overlay-token/docker-compose.yaml .
         sed -ien "s/{YOUR_DOMAIN}/$2/g" docker-compose.yaml                
     fi
