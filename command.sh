@@ -33,7 +33,7 @@ then
     help
 fi
 
-if [ $1 = "init" ]
+if [ $1 = "init" ]~
 then
     if [ $# -ne 2 ]
     then
