@@ -28,8 +28,8 @@ services:
     volumes:
       - "./substrate-overlay-token-bridge:/app"
     environment:
-      PARENT: "wss://dev.wshino.com:9944"
-      CHILD: "wss://dev.wshino.com:9945"   
+      PARENT: "wss://{YOUR_DOMAIN}:9944"
+      CHILD: "wss://{YOUR_DOMAIN}:9945"   
     working_dir: "/app"
     entrypoint: yarn
     command: dev
@@ -40,7 +40,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      NODE: "wss://dev.wshino.com:9944"
+      NODE: "wss://{YOUR_DOMAIN}:9944"
     working_dir: "/app"
     entrypoint: bash
     command: env.sh
@@ -51,7 +51,7 @@ services:
     ports:
       - "8001:8000"
     environment:
-      NODE: "wss://dev.wshino.com:9945"
+      NODE: "wss://{YOUR_DOMAIN}:9945"
     working_dir: "/app"
     entrypoint: yarn
     command: dev
