@@ -18,7 +18,9 @@ container_name_error () {
   echo "bridge" 1>&2
   exit 1
 }
-if [ $# -gt 2 ]; then
+
+if [ $# -gt 2 ]
+then
     help
 fi
 
@@ -29,10 +31,6 @@ then
     && cargo build --release
 elif [ $1 = "run" ]
 then
-    if [ ! -e parent.sh ] || [ ! -e child.sh ] || [ ! -e docker-compose.yaml ] || [ ! -e default.conf ]
-    then
-        cp -r substrate-overlay-token/docker/. .
-    fi
     sudo docker-compose up -d
 elif [ $1 = "log" ]
 then

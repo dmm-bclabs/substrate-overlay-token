@@ -4,20 +4,20 @@ services:
     image: "parity/substrate"
     volumes:
       - "./substrate-overlay-token/target/release/substrate-overlay-token:/usr/local/bin/substrate-overlay-token"
-      - "./parent.sh:/parent.sh"
+      - "./substrate-overlay-token/docker/parent.sh:/parent.sh"
     entrypoint: bash
     command: parent.sh
   child:
     image: "parity/substrate"
     volumes:
       - "./substrate-overlay-token/target/release/substrate-overlay-token:/usr/local/bin/substrate-overlay-token"
-      - "./child.sh:/child.sh"
+      - "./substrate-overlay-token/docker/child.sh:/child.sh"
     entrypoint: bash
     command: child.sh
   nginx:
     image: "nginx"
     volumes:
-      - "./default.conf:/etc/nginx/conf.d/default.conf"
+      - "./substrate-overlay-token/docker/default.conf:/etc/nginx/conf.d/default.conf"
       - "/etc/letsencrypt/live/dev.wshino.com/fullchain.pem:/etc/letsencrypt/live/dev.wshino.com/fullchain.pem"
       - "/etc/letsencrypt/live/dev.wshino.com/privkey.pem:/etc/letsencrypt/live/dev.wshino.com/privkey.pem"
     ports:
@@ -42,8 +42,8 @@ services:
     environment:
       NODE: "wss://dev.wshino.com:9944"
     working_dir: "/app"
-    entrypoint: yarn
-    command: dev
+    entrypoint: bash
+    command: env.sh
   ui-child:
     image: "node"
     volumes:

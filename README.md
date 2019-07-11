@@ -63,7 +63,18 @@ additional type definitions
 
 ```
 $ cp command.sh ../
+$ cp docker-compose.yaml ../
 $ cd ../
 $ git clone substrate-overlay-token-ui
 $ git clone substrate-overlay-token-bridge
+```
+
+Change some NODE variables in docker-compose.yaml according to your environment.
+
+You can run
+
+```
+$ sh command.sh build
+$ sh command.sh run
+$ sh command.sh stop
 ```
