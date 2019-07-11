@@ -1,0 +1,61 @@
+server {
+  listen 80;
+  server_name {YOUR_DOMAIN};
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 9944 ssl;
+  server_name d{YOUR_DOMAIN};
+
+  #ssl on;
+  ssl_certificate /etc/letsencrypt/live/{YOUR_DOMAIN}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{YOUR_DOMAIN}/privkey.pem;
+
+  access_log  /var/log/nginx/host.access.log  main;
+
+  charset UTF-8;
+  location / {
+      proxy_pass http://parent:9944/;
+      proxy_http_version 1.1;
+      proxy_redirect off;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "Upgrade";
+  }
+
+  error_page   500 502 503 504  /50x.html;
+  location = /50x.html {
+      root   html;
+  }
+
+  ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+
+}
+
+server {
+  listen 9945 ssl;
+  server_name {YOUR_DOMAIN};
+
+  #ssl on;
+  ssl_certificate /etc/letsencrypt/live/{YOUR_DOMAIN}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{YOUR_DOMAIN}/privkey.pem;
+
+  access_log  /var/log/nginx/host.access.log  main;
+
+  charset UTF-8;
+  location / {
+      proxy_pass http://child:9944/;
+      proxy_http_version 1.1;
+      proxy_redirect off;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "Upgrade";
+  }
+
+  error_page   500 502 503 504  /50x.html;
+  location = /50x.html {
+      root   html;
+  }
+
+  ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+
+}
