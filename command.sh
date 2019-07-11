@@ -23,7 +23,7 @@ container_name_error () {
 domain_name_error () {
   echo "init command must be use domain name." 1>&2
   echo "----" 1>&2
-  echo "e.g." 1>&2
+  echo "e.g." 1>&2
   echo "init dev.wshino.com" 1>&2
   exit 1
 }
@@ -35,7 +35,7 @@ fi
 
 if [ $1 = "init" ]
 then
-    if [ $2 = "" ]
+    if [ $# -ne 2 ]
     then
         domain_name_error
     else
