@@ -190,7 +190,7 @@ decl_module! {
 		}
 
 		// Send some token to the parent chain
-		fn send_to_parent(_origin, value: T::TokenBalance) -> Result {
+		fn send_to_parent(_origin, receiver: T::Hash, value: T::TokenBalance) -> Result {
 			let sender = ensure_signed(_origin)?;
 			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
 			let sender_balance = Self::balance_of(sender.clone());
@@ -204,12 +204,12 @@ decl_module! {
 			<LocalSupply<T>>::put(updated_local_supply);
 			<ParentSupply<T>>::put(updated_parent_supply);
 
-			Self::deposit_event(RawEvent::SentToParent(value));
+			Self::deposit_event(RawEvent::SentToParent(receiver, value));
 			Ok(())
 		}
 
 		// Send some token to a child chain
-		fn send_to_child(_origin, child: T::ChildChainId, value: T::TokenBalance) -> Result {
+		fn send_to_child(_origin, child: T::ChildChainId, receiver: T::Hash, value: T::TokenBalance) -> Result {
 			let sender = ensure_signed(_origin)?;
 			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
 			let sender_balance = Self::balance_of(sender.clone());
@@ -223,7 +223,7 @@ decl_module! {
 			<LocalSupply<T>>::put(updated_local_supply);
 			<ChildSupplies<T>>::insert(child, updated_child_supply);
 
-			Self::deposit_event(RawEvent::SentToChild(child, value));	
+			Self::deposit_event(RawEvent::SentToChild(child, receiver, value));	
 			Ok(())
 		}
 
@@ -282,6 +282,7 @@ decl_event!(
 		<T as system::Trait>::AccountId,
 		<T as Trait>::TokenBalance,
 		<T as Trait>::ChildChainId,
+		<T as system::Trait>::Hash,
 	{
 		// Just a dummy event.
 		// Event `Something` is declared with a parameter of the type `u32` and `AccountId`
@@ -289,8 +290,8 @@ decl_event!(
 		SomethingStored(u32, AccountId),
 		Minted(TokenBalance),
 		Burned(TokenBalance),
-		SentToParent(TokenBalance),
-		SentToChild(ChildChainId, TokenBalance),
+		SentToParent(Hash, TokenBalance),
+		SentToChild(ChildChainId, Hash, TokenBalance),
 		ReceivedFromParent(TokenBalance),
 		ReceivedFromChild(ChildChainId, TokenBalance),
 	}
