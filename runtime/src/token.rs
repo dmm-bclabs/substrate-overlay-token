@@ -146,7 +146,8 @@ decl_module! {
 			<TotalSupply<T>>::put(updated_total_supply);
 			<LocalSupply<T>>::put(updated_local_supply);
 			<ParentSupply<T>>::put(updated_parent_supply);
-
+			
+			Self::deposit_event(RawEvent::Minted(value));
 			Ok(())
 		}
 
@@ -184,11 +185,12 @@ decl_module! {
 			<LocalSupply<T>>::put(updated_local_supply);
 			<ParentSupply<T>>::put(updated_parent_supply);
 
+			Self::deposit_event(RawEvent::Burned(value));
 			Ok(())
 		}
 
 		// Send some token to the parent chain
-		fn send_to_parent(_origin, value: T::TokenBalance) -> Result {
+		fn send_to_parent(_origin, receiver: T::Hash, value: T::TokenBalance) -> Result {
 			let sender = ensure_signed(_origin)?;
 			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
 			let sender_balance = Self::balance_of(sender.clone());
@@ -202,11 +204,12 @@ decl_module! {
 			<LocalSupply<T>>::put(updated_local_supply);
 			<ParentSupply<T>>::put(updated_parent_supply);
 
+			Self::deposit_event(RawEvent::SentToParent(receiver, value));
 			Ok(())
 		}
 
 		// Send some token to a child chain
-		fn send_to_child(_origin, child: T::ChildChainId, value: T::TokenBalance) -> Result {
+		fn send_to_child(_origin, child: T::ChildChainId, receiver: T::Hash, value: T::TokenBalance) -> Result {
 			let sender = ensure_signed(_origin)?;
 			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
 			let sender_balance = Self::balance_of(sender.clone());
@@ -220,6 +223,7 @@ decl_module! {
 			<LocalSupply<T>>::put(updated_local_supply);
 			<ChildSupplies<T>>::insert(child, updated_child_supply);
 
+			Self::deposit_event(RawEvent::SentToChild(child, receiver, value));	
 			Ok(())
 		}
 
@@ -242,6 +246,7 @@ decl_module! {
 			<LocalSupply<T>>::put(updated_local_supply);
 			<BalanceOf<T>>::insert(receiver.clone(), updated_receiver_balance);
 
+			Self::deposit_event(RawEvent::ReceivedFromParent(value));	
 			Ok(())
 		}
 
@@ -265,17 +270,30 @@ decl_module! {
 			<LocalSupply<T>>::put(updated_local_supply);
 			<BalanceOf<T>>::insert(receiver.clone(), updated_receiver_balance);
 
+			Self::deposit_event(RawEvent::ReceivedFromChild(child, value));	
 			Ok(())
 		}
 	}
 }
 
 decl_event!(
-	pub enum Event<T> where AccountId = <T as system::Trait>::AccountId {
+	pub enum Event<T> 
+	where 
+		<T as system::Trait>::AccountId,
+		<T as Trait>::TokenBalance,
+		<T as Trait>::ChildChainId,
+		<T as system::Trait>::Hash,
+	{
 		// Just a dummy event.
 		// Event `Something` is declared with a parameter of the type `u32` and `AccountId`
 		// To emit this event, we call the deposit funtion, from our runtime funtions
 		SomethingStored(u32, AccountId),
+		Minted(TokenBalance),
+		Burned(TokenBalance),
+		SentToParent(Hash, TokenBalance),
+		SentToChild(ChildChainId, Hash, TokenBalance),
+		ReceivedFromParent(TokenBalance),
+		ReceivedFromChild(ChildChainId, TokenBalance),
 	}
 );
 

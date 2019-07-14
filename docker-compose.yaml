@@ -1,14 +1,14 @@
 version: '3'
 services:
   parent:
-    image: "parity/substrate"
+    image: "overlaytoken:0.1"
     volumes:
       - "./substrate-overlay-token/target/release/substrate-overlay-token:/usr/local/bin/substrate-overlay-token"
       - "./substrate-overlay-token/docker/parent.sh:/parent.sh"
     entrypoint: bash
     command: parent.sh
   child:
-    image: "parity/substrate"
+    image: "overlaytoken:0.1"
     volumes:
       - "./substrate-overlay-token/target/release/substrate-overlay-token:/usr/local/bin/substrate-overlay-token"
       - "./substrate-overlay-token/docker/child.sh:/child.sh"

@@ -46,9 +46,10 @@ then
     fi
 elif [ $1 = "build" ]
 then
-    cd substrate-overlay-token \
-    && ./scripts/build.sh \
-    && cargo build --release
+    cd substrate-overlay-token && \
+    sudo docker build -t overlaytoken:0.1 . && \
+    ./scripts/build.sh && \
+    cargo build --release
 elif [ $1 = "run" ]
 then
     sudo docker-compose up -d
