@@ -2,6 +2,9 @@
 
 A new SRML-based Substrate node, ready for hacking.
 
+## document
+
+https://github.com/dmm-bclabs/overlay-token
 
 ## initialize
 
