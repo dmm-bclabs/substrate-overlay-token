@@ -59,7 +59,7 @@ decl_module! {
 		// this is needed only if you are using events in your module
 		fn deposit_event<T>() = default;
 
-		fn init(origin) -> Result {
+		fn init(origin, ticker: Vec<u8>, name: Vec<u8>) -> Result {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(Self::is_init() == false, "Already initialized.");
@@ -71,6 +71,8 @@ decl_module! {
 			<ParentSupply<T>>::put(zero);
 			<BalanceOf<T>>::insert(sender.clone(), zero);
 			<Owner<T>>::put(sender.clone());
+			<Ticker<T>>::put(ticker);
+			<Name<T>>::put(name);
 			<Init<T>>::put(true);
 			<Root<T>>::put(true);
 
