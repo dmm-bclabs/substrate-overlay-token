@@ -48,6 +48,11 @@ decl_storage! {
 
 		ParentSupply get(parent_supply): T::TokenBalance;
 		ChildSupplies get(child_supply_of): map T::ChildChainId => T::TokenBalance;
+
+		// FIXME: jkcomment
+		// Listにすると、合意形成のときの処理が面倒くさくなるし、
+		// 配列形式にすると、IndexやCountも必要になり、面倒くさくなる
+		RelayerArray get(relayer_of): map u64 => T::Hash;
 	}
 }
 
