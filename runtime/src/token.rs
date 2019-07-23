@@ -49,10 +49,12 @@ decl_storage! {
 		ParentSupply get(parent_supply): T::TokenBalance;
 		ChildSupplies get(child_supply_of): map T::ChildChainId => T::TokenBalance;
 
+		RelayersIndex: map T::AccountId => u64;
+		RelayersCount get(all_relayers_count): u64;
 		// FIXME: jkcomment
-		// Listにすると、合意形成のときの処理が面倒くさくなるし、
-		// 配列形式にすると、IndexやCountも必要になり、面倒くさくなる
-		RelayerArray get(relayer_of): map u64 => T::Hash;
+		// とりあえずT::AccountIdにしているが、
+		// 今後他の型にする必要があるのでは？
+		RelayersArray get(relayer_by_index): map u64 => T::AccountId;
 	}
 }
 
@@ -84,13 +86,21 @@ decl_module! {
 			Ok(())
 		}
 
-		fn set_parent(_origin, parent_supply: u128) -> Result {
+		fn set_parent(_origin, parent_supply: u128, relayer_account: T::AccountId) -> Result {
 			let sender = ensure_signed(_origin)?;
 			ensure!(Self::owner() == sender, "Only owner can set parent chain");
 			ensure!(Self::is_root(), "This chain already has parent chain");
 
 			let supply = <T::TokenBalance as As<u128>>::sa(parent_supply);
 			let zero = <T::TokenBalance as As<u128>>::sa(0);
+
+			let all_relayers_count = Self::all_relayers_count();
+			let new_all_relayers_count = all_relayers_count.checked_add(1)
+				.ok_or("Overflow adding a new relayer to total supply")?;
+
+			<RelayersArray<T>>::insert(all_relayers_count, relayer_account.clone());
+			<RelayersCount<T>>::put(new_all_relayers_count);
+			<RelayersIndex<T>>::insert(relayer_account, all_relayers_count);
 
 			<TotalSupply<T>>::put(supply);
 			<LocalSupply<T>>::put(zero);
