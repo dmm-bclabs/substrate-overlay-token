@@ -314,6 +314,12 @@ decl_event!(
 	}
 );
 
+impl<T: Trait> Module<T> {
+	fn _is_relayer(relayer_account: T::AccountId) -> bool {
+		<RelayersIndex<T>>::exists(relayer_account)
+	}
+}
+
 /// tests for this module
 #[cfg(test)]
 mod tests {
