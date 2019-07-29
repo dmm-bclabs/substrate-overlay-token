@@ -73,8 +73,8 @@ additional type definitions
 ```
 $ cp command.sh ../
 $ cd ../
-$ git clone substrate-overlay-token-ui
-$ git clone substrate-overlay-token-bridge
+$ git clone https://github.com/dmm-bclabs/substrate-overlay-token-ui.git
+$ git clone https://github.com/dmm-bclabs/substrate-overlay-token-bridge.git
 ```
 
 You can run
