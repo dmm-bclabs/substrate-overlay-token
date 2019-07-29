@@ -6,6 +6,12 @@ A new SRML-based Substrate node, ready for hacking.
 
 https://github.com/dmm-bclabs/overlay-token
 
+## requirements
+
+You should install substrate on your local environment as follow.
+
+https://github.com/paritytech/substrate#on-mac-and-ubuntu
+
 ## initialize
 
 ```
