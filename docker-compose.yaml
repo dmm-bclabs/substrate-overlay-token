@@ -31,8 +31,8 @@ services:
       PARENT: "wss://{YOUR_DOMAIN}:9944"
       CHILD: "wss://{YOUR_DOMAIN}:9945"   
     working_dir: "/app"
-    entrypoint: yarn
-    command: dev
+    entrypoint: bash
+    command: env.sh
   ui-parent:
     image: "node"
     volumes:
@@ -53,5 +53,5 @@ services:
     environment:
       NODE: "wss://{YOUR_DOMAIN}:9945"
     working_dir: "/app"
-    entrypoint: yarn
-    command: dev
+    entrypoint: bash
+    command: env.sh
