@@ -75,6 +75,7 @@ You can run
 
 ```
 $ sh command.sh init {YOUR_DOMAIN}
+$ sh command.sh build
 $ sh command.sh run
 $ sh command.sh stop
 ```
