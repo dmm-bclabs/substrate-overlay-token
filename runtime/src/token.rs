@@ -192,7 +192,7 @@ decl_module! {
 		}
 
 		// Send some token to the parent chain
-		fn send_to_parent(_origin, receiver: T::Hash, value: T::TokenBalance) -> Result {
+		fn send_to_parent(_origin, receiver: T::AccountId, value: T::TokenBalance) -> Result {
 			let sender = ensure_signed(_origin)?;
 			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
 			let sender_balance = Self::balance_of(sender.clone());
@@ -211,7 +211,7 @@ decl_module! {
 		}
 
 		// Send some token to a child chain
-		fn send_to_child(_origin, child: T::ChildChainId, receiver: T::Hash, value: T::TokenBalance) -> Result {
+		fn send_to_child(_origin, child: T::ChildChainId, receiver: T::AccountId, value: T::TokenBalance) -> Result {
 			let sender = ensure_signed(_origin)?;
 			ensure!(<BalanceOf<T>>::exists(sender.clone()), "Account does not own this token");
 			let sender_balance = Self::balance_of(sender.clone());
@@ -230,8 +230,7 @@ decl_module! {
 		}
 
 		// Receive some token from the parent chain
-		fn receive_from_parent(_origin, value: T::TokenBalance) -> Result {
-			let receiver = ensure_signed(_origin)?;
+		fn receive_from_parent(_origin, receiver: T::AccountId, value: T::TokenBalance) -> Result {
 			let parent_supply = Self::parent_supply();
 			ensure!(parent_supply >= value, "Not enough balance.");
 
@@ -253,8 +252,7 @@ decl_module! {
 		}
 
 		// Receive some token from a child chain
-		fn receive_from_child(_origin, child: T::ChildChainId, value: T::TokenBalance) -> Result {
-			let receiver = ensure_signed(_origin)?;
+		fn receive_from_child(_origin, child: T::ChildChainId, receiver: T::AccountId, value: T::TokenBalance) -> Result {
 			ensure!(<ChildSupplies<T>>::exists(child), "Child Chain does not own this token");
 			let child_supply = Self::child_supply_of(child);
 			ensure!(child_supply >= value, "Not enough balance.");
@@ -284,7 +282,6 @@ decl_event!(
 		<T as system::Trait>::AccountId,
 		<T as Trait>::TokenBalance,
 		<T as Trait>::ChildChainId,
-		<T as system::Trait>::Hash,
 	{
 		// Just a dummy event.
 		// Event `Something` is declared with a parameter of the type `u32` and `AccountId`
@@ -292,8 +289,8 @@ decl_event!(
 		SomethingStored(u32, AccountId),
 		Minted(TokenBalance),
 		Burned(TokenBalance),
-		SentToParent(Hash, TokenBalance),
-		SentToChild(ChildChainId, Hash, TokenBalance),
+		SentToParent(AccountId, TokenBalance),
+		SentToChild(ChildChainId, AccountId, TokenBalance),
 		ReceivedFromParent(TokenBalance),
 		ReceivedFromChild(ChildChainId, TokenBalance),
 	}
