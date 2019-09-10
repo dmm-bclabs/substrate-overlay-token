@@ -231,6 +231,7 @@ decl_module! {
 
 		// Receive some token from the parent chain
 		fn receive_from_parent(_origin, receiver: T::AccountId, value: T::TokenBalance) -> Result {
+			ensure_signed(_origin)?;
 			let parent_supply = Self::parent_supply();
 			ensure!(parent_supply >= value, "Not enough balance.");
 
@@ -253,6 +254,7 @@ decl_module! {
 
 		// Receive some token from a child chain
 		fn receive_from_child(_origin, child: T::ChildChainId, receiver: T::AccountId, value: T::TokenBalance) -> Result {
+			ensure_signed(_origin)?;
 			ensure!(<ChildSupplies<T>>::exists(child), "Child Chain does not own this token");
 			let child_supply = Self::child_supply_of(child);
 			ensure!(child_supply >= value, "Not enough balance.");
